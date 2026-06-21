@@ -65,7 +65,13 @@ def create_book(request: Request, book: BookCreate):
 @app.delete("/books/{title_id}", status_code=200)
 @limiter.limit("10/minute")
 def delete_book(request: Request, title_id: str):
-    """Delete a book record by its title."""
+    """
+    Delete a book record by its exact title OR its URL-friendly slug.
+    
+    Example:
+    If the product URL is `.../scott-pilgrim-1_987/index.html`, 
+    you can delete it by passing `scott-pilgrim-1_987` as the title_id.
+    """
     success = services.delete_book(title_id)
     if not success:
         raise HTTPException(status_code=404, detail="Book not found")

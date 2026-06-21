@@ -56,14 +56,13 @@ Retrieve the list of scraped books. Supports pagination and filtering.
 **Query Parameters:**
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `page` | `int` | `1` | The page number to retrieve (must be >= 1) |
-| `limit` | `int` | `10` | Number of items per page (max 100) |
-| `min_rating` | `int` | `None`| Filter books with a star rating greater than or equal to this value (1-5) |
+| `skip` | `int` | `0` | Number of records to skip (for pagination) |
+| `limit` | `int` | `100` | Max records to return (max 100) |
 | `country` | `str` | `None`| Filter books exactly matching this publisher country |
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:8000/books?page=1&limit=5&min_rating=5" -H "X-API-Key: your-secret-api-key"
+curl -X GET "http://localhost:8000/books?skip=0&limit=5&country=Vietnam" -H "X-API-Key: your-secret-api-key"
 ```
 
 **Response (200 OK):**
@@ -79,9 +78,55 @@ curl -X GET "http://localhost:8000/books?page=1&limit=5&min_rating=5" -H "X-API-
       "availability": "In stock",
       "product_url": "https://...",
       "star_rating": 5,
-      "country": "Croatia"
+      "publisher_country": "Croatia"
     }
   ]
+}
+```
+
+### 4.3 Create a New Book
+Add a new book to the in-memory database.
+
+- **URL**: `/books`
+- **Method**: `POST`
+- **Auth Required**: Yes (`X-API-Key`)
+
+**Example Request:**
+```bash
+curl -X POST "http://localhost:8000/books" \
+     -H "X-API-Key: your-secret-api-key" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "title": "New Book",
+           "price": 10.99,
+           "availability": "In stock",
+           "product_url": "http://example.com",
+           "star_rating": 5,
+           "publisher_country": "Vietnam"
+         }'
+```
+
+### 4.4 Delete a Book by Title (or Slug)
+Remove a book using its exact title OR its URL-friendly slug.
+
+- **URL**: `/books/{title_id}`
+- **Method**: `DELETE`
+- **Auth Required**: Yes (`X-API-Key`)
+
+> [!TIP]
+> **Best Practice:** Instead of using the raw title with spaces and special characters, you can extract the **slug** from the `product_url`. 
+> For example, if the `product_url` is `.../scott-pilgrims-precious-little-life-scott-pilgrim-1_987/index.html`, the slug is `scott-pilgrims-precious-little-life-scott-pilgrim-1_987`.
+
+**Example Request (Using Slug):**
+```bash
+curl -X DELETE "http://localhost:8000/books/scott-pilgrims-precious-little-life-scott-pilgrim-1_987" \
+     -H "X-API-Key: your-secret-api-key"
+```
+
+**Response (200 OK):**
+```json
+{
+  "detail": "Book deleted"
 }
 ```
 
