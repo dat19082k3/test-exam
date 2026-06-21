@@ -1,59 +1,84 @@
-# Book Scraper Project
+# Book Scraper & RPA Automation System
 
-A robust web scraping pipeline that extracts book data from [Books to Scrape](https://books.toscrape.com), including automatic pagination handling, concurrent HTML backups, and JSON/CSV data exports.
+An end-to-end pipeline that scrapes book data, enriches it with country information, serves it via a secure REST API, and automates Wikipedia searches for 5-star books to generate an Excel report.
 
-## Prerequisites
+## Features
 
-- **Python 3.10+** installed on your system.
+- Phase 1: Web Scraper (concurrently scrapes books from toscrape.com and backs up HTML)
+- Phase 2: Data Enrichment (assigns randomized countries via restcountries.com API)
+- Phase 3: REST API (FastAPI server with API Key auth, rate limiting, and pagination)
+- Phase 4: RPA Bot (consumes the API, automates a headless browser to search Wikipedia, and generates an Excel report)
 
-## Installation & Setup
+## Setup & Installation
 
-To avoid conflicting dependencies and permission issues, it is highly recommended to run this project inside a virtual environment.
+Follow these steps to get the system running locally (requires Python 3.13+).
 
-### 1. Create a virtual environment
+1. Create and activate a virtual environment
 ```bash
 python -m venv venv
+
+# On Windows:
+venv\Scripts\activate
+
+# On Linux/macOS:
+source venv/bin/activate
 ```
 
-### 2. Activate the virtual environment
-- **Windows**:
-  ```cmd
-  venv\Scripts\activate
-  ```
-- **macOS / Linux**:
-  ```bash
-  source venv/bin/activate
-  ```
-
-### 3. Install dependencies
+2. Install dependencies and browser binaries
 ```bash
 pip install -r requirements.txt
+playwright install chromium
 ```
 
-## Usage
-
-Run the scraper pipeline from the root directory of the project:
-
+3. Configure environment variables
 ```bash
-python -m src.scraper
+cp .env.example .env
+```
+Make sure to open the `.env` file and set `API_KEY=your-secret-api-key`. This key is required to access the REST API.
+
+## Usage Guide
+
+The system is composed of modular components. Run them in the following order:
+
+### 1. Run the Web Scraper
+Scrapes the target website and saves the raw data to `data/books.json` and `data/books.csv`.
+```bash
+python src/scraper.py
 ```
 
-The scraper will automatically:
-1. Navigate through the "Sequential Art" category pages.
-2. Scrape details for all available books (Title, Price, Availability, URL, Star Rating).
-3. Concurrently download and backup the raw HTML of each product page.
-4. Export the structured data.
+### 2. Start the REST API
+Starts the server that provides access to the scraped data. Keep this terminal open.
+```bash
+uvicorn src.api.main:app --reload
+```
+View the interactive API docs at: http://localhost:8000/docs
 
-## Output
+### 3. Run the RPA Bot
+Open a new terminal, activate the virtual environment, and run the automation bot. It will fetch the 5-star books from your API, search Wikipedia, and save an Excel file in the `output/` directory.
+```bash
+python src/bot/wiki_bot.py
+```
 
-After a successful run, the following files and directories will be generated:
-- `data/books.json`: Scraped data in JSON format.
-- `data/books.csv`: Scraped data in CSV format (UTF-8 with BOM for Excel compatibility).
-- `html_backup/`: A directory containing the raw HTML files of every scraped book for debugging purposes.
-- `logs/`: Application execution logs.
+## Running Tests
 
-## Troubleshooting
+The project includes unit tests for both the API and the Scraper. To run them:
+```bash
+pytest -v
+```
 
-- **`ModuleNotFoundError`**: Ensure you have activated your virtual environment (`venv\Scripts\activate` on Windows, `source venv/bin/activate` on macOS) before running the script.
-- **`PermissionError: [Errno 13] Permission denied` (Windows)**: This usually happens if you have `data/books.csv` open in Microsoft Excel while the scraper is trying to write to it. Close the file and run the script again.
-- **Missing or broken images in HTML backups**: This is expected. The HTML backups contain raw relative links intended for DOM debugging, not for offline viewing.
+## Project Structure
+
+```text
+├── .env.example             # Environment variables template
+├── data/                    # Generated datasets
+├── html_backup/             # Raw HTML backups from the scraper
+├── output/                  # Generated Excel reports
+├── requirements.txt         # Project dependencies
+├── src/
+│   ├── scraper.py           # Web scraping script
+│   ├── countries.py         # Third-party API integration
+│   ├── logger.py            # Centralized logger
+│   ├── api/                 # FastAPI REST application
+│   └── bot/                 # Playwright RPA bot
+└── tests/                   # Pytest suite
+```
