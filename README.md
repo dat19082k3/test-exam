@@ -53,7 +53,15 @@ python src/scraper.py
 ```
 
 ### 2. Start the REST API
-Starts the server that provides access to the scraped data. Keep this terminal open.
+
+**Option A: Using Docker (Recommended)**
+Run the API server in a lightweight container. The local `data/` folder is automatically mounted.
+```bash
+docker-compose up -d --build
+```
+
+**Option B: Local Execution**
+Starts the server locally. Keep this terminal open.
 ```bash
 uvicorn src.api.main:app --reload
 ```
