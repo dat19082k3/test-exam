@@ -111,7 +111,7 @@ def generate_report(books: list[dict], output_path: str = "output/rpa_report.xls
         row = [
             book.get("title", ""),
             book.get("price", ""),
-            book.get("country", ""),
+            book.get("publisher_country", ""),
             url
         ]
         ws.append(row)
@@ -157,5 +157,5 @@ if __name__ == "__main__":
     print("\n--- Final Enriched Data (Preview) ---")
     for b in enriched_books[:3]:
         print(f"\nTitle: {b['title']}")
-        print(f"Country: {b.get('country')}")
+        print(f"Country: {b.get('publisher_country')}")
         print(f"Wikipedia URL: {b.get('wikipedia_url')}")

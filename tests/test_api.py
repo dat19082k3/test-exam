@@ -26,7 +26,7 @@ def mock_db(tmp_path):
             "availability": "In stock",
             "product_url": "http://test1.com",
             "star_rating": 5,
-            "country": "Vietnam"
+            "publisher_country": "Vietnam"
         },
         {
             "id": 2,
@@ -35,7 +35,7 @@ def mock_db(tmp_path):
             "availability": "In stock",
             "product_url": "http://test2.com",
             "star_rating": 3,
-            "country": "Japan"
+            "publisher_country": "Japan"
         }
     ]
     with open(test_db_file, "w", encoding="utf-8") as f:
@@ -81,7 +81,7 @@ def test_create_book():
         "availability": "In stock",
         "product_url": "http://new.com",
         "star_rating": 4,
-        "country": "USA"
+        "publisher_country": "USA"
     }
     response = client.post("/books", json=new_book, headers=HEADERS)
     assert response.status_code == 201
@@ -95,13 +95,13 @@ def test_create_book_invalid_data():
         "availability": "In stock",
         "product_url": "http://new.com",
         "star_rating": 6, # Invalid, max is 5
-        "country": "USA"
+        "publisher_country": "USA"
     }
     response = client.post("/books", json=invalid_book, headers=HEADERS)
     assert response.status_code == 422
 
 def test_delete_book():
-    response = client.delete("/books/1", headers=HEADERS)
+    response = client.delete("/books/Test Book 1", headers=HEADERS)
     assert response.status_code == 200
     
     # Verify it's gone
@@ -116,7 +116,7 @@ def test_rate_limiter():
         "availability": "In stock",
         "product_url": "http://spam.com",
         "star_rating": 1,
-        "country": "Spam"
+        "publisher_country": "Spam"
     }
     
     # 10 successful requests
@@ -153,7 +153,7 @@ def test_create_book_negative_price():
         "availability": "In stock",
         "product_url": "http://cheap.com",
         "star_rating": 4,
-        "country": "USA"
+        "publisher_country": "USA"
     }
     response = client.post("/books", json=invalid_book, headers=HEADERS)
     assert response.status_code == 422
@@ -166,7 +166,7 @@ def test_create_book_zero_star_rating():
         "availability": "In stock",
         "product_url": "http://bad.com",
         "star_rating": 0,
-        "country": "USA"
+        "publisher_country": "USA"
     }
     response = client.post("/books", json=invalid_book, headers=HEADERS)
     assert response.status_code == 422
@@ -178,7 +178,7 @@ def test_create_book_missing_title():
         "availability": "In stock",
         "product_url": "http://bad.com",
         "star_rating": 3,
-        "country": "USA"
+        "publisher_country": "USA"
     }
     response = client.post("/books", json=invalid_book, headers=HEADERS)
     assert response.status_code == 422

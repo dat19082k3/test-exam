@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from src.api.models import BookCreate, Book
 
-BOOKS_FILE = Path("data/books.json")
+BOOKS_FILE = Path("data/books_with_country.json")
 
 # In-memory store
 _books_db: list[dict] = []
@@ -27,10 +27,15 @@ def save_db():
     with open(BOOKS_FILE, "w", encoding="utf-8") as f:
         json.dump(_books_db, f, ensure_ascii=False, indent=2)
 
-def get_books(skip: int = 0, limit: int = 100) -> list[dict]:
+def get_books(skip: int = 0, limit: int = 100, country: str = None) -> list[dict]:
     if not _books_db:
         load_db()
-    return _books_db[skip : skip + limit]
+    
+    results = _books_db
+    if country:
+        results = [b for b in results if b.get("publisher_country") == country]
+        
+    return results[skip : skip + limit]
 
 def get_book(book_id: int) -> dict | None:
     if not _books_db:
@@ -52,12 +57,12 @@ def create_book(book: BookCreate) -> dict:
     save_db()
     return new_book
 
-def delete_book(book_id: int) -> bool:
+def delete_book(title_id: str) -> bool:
     if not _books_db:
         load_db()
         
     for i, book in enumerate(_books_db):
-        if book.get("id") == book_id:
+        if book.get("title") == title_id:
             _books_db.pop(i)
             save_db()
             return True

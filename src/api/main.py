@@ -41,10 +41,11 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 def get_books(
     request: Request, 
     skip: int = Query(0, ge=0, description="Number of records to skip"), 
-    limit: int = Query(100, ge=1, le=100, description="Max records to return")
+    limit: int = Query(100, ge=1, le=100, description="Max records to return"),
+    country: str = Query(None, description="Filter books by publisher country")
 ):
-    """Retrieve all books with pagination."""
-    return services.get_books(skip=skip, limit=limit)
+    """Retrieve all books with pagination and optional filtering."""
+    return services.get_books(skip=skip, limit=limit, country=country)
 
 @app.get("/books/{book_id}", response_model=Book)
 @limiter.limit("30/minute")
@@ -61,11 +62,11 @@ def create_book(request: Request, book: BookCreate):
     """Create a new book record."""
     return services.create_book(book)
 
-@app.delete("/books/{book_id}", status_code=200)
+@app.delete("/books/{title_id}", status_code=200)
 @limiter.limit("10/minute")
-def delete_book(request: Request, book_id: int):
-    """Delete a book record by its ID."""
-    success = services.delete_book(book_id)
+def delete_book(request: Request, title_id: str):
+    """Delete a book record by its title."""
+    success = services.delete_book(title_id)
     if not success:
         raise HTTPException(status_code=404, detail="Book not found")
     return {"detail": "Book deleted"}
