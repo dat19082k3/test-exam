@@ -2,6 +2,7 @@ import csv
 import json
 import re
 import time
+import random
 from concurrent.futures import ThreadPoolExecutor
 import requests
 from bs4 import BeautifulSoup
@@ -9,6 +10,7 @@ from pathlib import Path
 from urllib.parse import urljoin
 
 from src.logger import get_logger
+from src.countries import get_countries
 
 logger = get_logger("scraper")
 
@@ -48,13 +50,14 @@ def fetch_page(page_num: int) -> str | None:
 
 RATING_MAP = {"One": 1, "Two": 2, "Three": 3, "Four": 4, "Five": 5}
 
-def parse_books(html: str, current_url: str) -> list[dict]:
+def parse_books(html: str, current_url: str, countries: list[str]) -> list[dict]:
     """
     Parse a list of books from a category page HTML.
     
     Args:
         html: Raw HTML string of the category page.
         current_url: URL of the current page, used to resolve relative links.
+        countries: List of available countries for attribution.
         
     Returns:
         List of dictionaries containing book data.
@@ -90,13 +93,14 @@ def parse_books(html: str, current_url: str) -> list[dict]:
                 if c in RATING_MAP:
                     star_rating = RATING_MAP[c]
                     break
-                    
+        
         books.append({
             "title": title,
             "price": price,
             "availability": availability,
             "product_url": product_url,
-            "star_rating": star_rating
+            "star_rating": star_rating,
+            "country": random.choice(countries) if countries else "Unknown"
         })
         
     logger.info(f"Parsed {len(books)} books from page.")
@@ -145,7 +149,7 @@ def save_to_csv(books: list[dict], filepath: str) -> None:
         
     # Use utf-8-sig to include BOM so Excel opens it correctly
     with open(filepath, "w", encoding="utf-8-sig", newline="") as f:
-        fieldnames = ["title", "price", "availability", "product_url", "star_rating"]
+        fieldnames = ["title", "price", "availability", "product_url", "star_rating", "country"]
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         
         writer.writeheader()
@@ -158,6 +162,9 @@ def main():
     logger.info("Starting web scraper pipeline...")
     start_time = time.time()
     
+    # Pre-fetch the countries list once
+    countries = get_countries()
+    
     all_books = []
     page_num = 1
     
@@ -167,7 +174,7 @@ def main():
             break
             
         current_url = f"{BASE_URL}index.html" if page_num == 1 else f"{BASE_URL}page-{page_num}.html"
-        books_on_page = parse_books(html, current_url)
+        books_on_page = parse_books(html, current_url, countries)
         all_books.extend(books_on_page)
         
         # Backup HTML concurrently to save time
