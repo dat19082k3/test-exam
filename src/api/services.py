@@ -37,11 +37,15 @@ def get_books(skip: int = 0, limit: int = 100, country: str = None) -> list[dict
         
     return results[skip : skip + limit]
 
-def get_book(book_id: int) -> dict | None:
+def get_book(title_id: str) -> dict | None:
     if not _books_db:
         load_db()
     for book in _books_db:
-        if book.get("id") == book_id:
+        title = book.get("title", "")
+        url_parts = [p for p in book.get("product_url", "").split("/") if p and p not in ("..", "index.html")]
+        slug = url_parts[-1] if url_parts else ""
+        
+        if title == title_id or slug == title_id:
             return book
     return None
 
@@ -62,7 +66,13 @@ def delete_book(title_id: str) -> bool:
         load_db()
         
     for i, book in enumerate(_books_db):
-        if book.get("title") == title_id:
+        title = book.get("title", "")
+        # Extract slug from product_url (e.g., "scott-pilgrims-precious-little-life-scott-pilgrim-1_987")
+        url_parts = [p for p in book.get("product_url", "").split("/") if p and p not in ("..", "index.html")]
+        slug = url_parts[-1] if url_parts else ""
+        
+        # Accept either exact title or the slugified title
+        if title == title_id or slug == title_id:
             _books_db.pop(i)
             save_db()
             return True

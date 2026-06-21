@@ -84,7 +84,31 @@ curl -X GET "http://localhost:8000/books?skip=0&limit=5&country=Vietnam" -H "X-A
 }
 ```
 
-### 4.3 Create a New Book
+### 4.3 Fetch a Single Book
+Retrieve a specific book by its exact title OR its URL-friendly slug.
+
+- **URL**: `/books/{title_id}`
+- **Method**: `GET`
+- **Auth Required**: Yes (`X-API-Key`)
+
+**Example Request:**
+```bash
+curl -X GET "http://localhost:8000/books/scott-pilgrims-precious-little-life-scott-pilgrim-1_987" -H "X-API-Key: your-secret-api-key"
+```
+
+**Response (200 OK):**
+```json
+{
+  "title": "Scott Pilgrim's Precious Little Life (Scott Pilgrim #1)",
+  "price": 52.29,
+  "availability": "In stock",
+  "product_url": "https://...",
+  "star_rating": 5,
+  "publisher_country": "Croatia"
+}
+```
+
+### 4.4 Create a New Book
 Add a new book to the in-memory database.
 
 - **URL**: `/books`
@@ -106,7 +130,7 @@ curl -X POST "http://localhost:8000/books" \
          }'
 ```
 
-### 4.4 Delete a Book by Title (or Slug)
+### 4.5 Delete a Book by Title (or Slug)
 Remove a book using its exact title OR its URL-friendly slug.
 
 - **URL**: `/books/{title_id}`

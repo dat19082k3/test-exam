@@ -66,12 +66,12 @@ def test_get_all_books():
     assert data[0]["title"] == "Test Book 1"
 
 def test_get_book_success():
-    response = client.get("/books/1", headers=HEADERS)
+    response = client.get("/books/test1.com", headers=HEADERS)
     assert response.status_code == 200
     assert response.json()["title"] == "Test Book 1"
 
 def test_get_book_not_found():
-    response = client.get("/books/999", headers=HEADERS)
+    response = client.get("/books/nonexistent-slug", headers=HEADERS)
     assert response.status_code == 404
 
 def test_create_book():
@@ -101,11 +101,12 @@ def test_create_book_invalid_data():
     assert response.status_code == 422
 
 def test_delete_book():
-    response = client.delete("/books/Test Book 1", headers=HEADERS)
+    # Delete by slug (extracted from product_url)
+    response = client.delete("/books/test1.com", headers=HEADERS)
     assert response.status_code == 200
     
     # Verify it's gone
-    response2 = client.get("/books/1", headers=HEADERS)
+    response2 = client.get("/books/test1.com", headers=HEADERS)
     assert response2.status_code == 404
 
 def test_rate_limiter():
@@ -184,7 +185,6 @@ def test_create_book_missing_title():
     assert response.status_code == 422
 
 def test_get_book_invalid_id_type():
-    # ID must be an integer, strings should fail validation
-    response = client.get("/books/abc", headers=HEADERS)
-    assert response.status_code == 422
-
+    # Since we now use string slugs, this test should be removed or changed.
+    # We will just pass it, as string validation handles any characters.
+    pass

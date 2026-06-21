@@ -47,11 +47,13 @@ def get_books(
     """Retrieve all books with pagination and optional filtering."""
     return services.get_books(skip=skip, limit=limit, country=country)
 
-@app.get("/books/{book_id}", response_model=Book)
+@app.get("/books/{title_id}", response_model=Book)
 @limiter.limit("30/minute")
-def get_book(request: Request, book_id: int):
-    """Retrieve a specific book by its ID."""
-    book = services.get_book(book_id)
+def get_book(request: Request, title_id: str):
+    """
+    Retrieve a specific book by its exact title OR its URL-friendly slug.
+    """
+    book = services.get_book(title_id)
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
     return book
