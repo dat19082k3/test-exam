@@ -25,7 +25,9 @@ def load_db():
 def save_db():
     BOOKS_FILE.parent.mkdir(parents=True, exist_ok=True)
     with open(BOOKS_FILE, "w", encoding="utf-8") as f:
-        json.dump(_books_db, f, ensure_ascii=False, indent=2)
+        # Strip the in-memory 'id' to keep the JSON clean as originally scraped
+        pure_data = [{k: v for k, v in book.items() if k != "id"} for book in _books_db]
+        json.dump(pure_data, f, ensure_ascii=False, indent=2)
 
 def get_books(skip: int = 0, limit: int = 100, country: str = None) -> list[dict]:
     if not _books_db:
