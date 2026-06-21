@@ -23,9 +23,7 @@ def test_parse_books():
     """
     
     current_url = "https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html"
-    countries = ["Vietnam"]
-    
-    books = parse_books(mock_html, current_url, countries)
+    books = parse_books(mock_html, current_url)
     
     assert len(books) == 1
     book = books[0]
@@ -35,13 +33,12 @@ def test_parse_books():
     assert book["price"] == 52.29
     assert book["availability"] == "In stock"
     assert book["star_rating"] == 5
-    assert book["country"] == "Vietnam"
     assert "scott-pilgrims-precious-little-life-scott-pilgrim-1_987/index.html" in book["product_url"]
 
 def test_parse_books_empty():
     """Test that parsing an empty or irrelevant HTML returns an empty list."""
     mock_html = "<html><body><h1>No books here</h1></body></html>"
-    books = parse_books(mock_html, "http://example.com", ["USA"])
+    books = parse_books(mock_html, "http://example.com")
     assert len(books) == 0
 
 def test_parse_books_missing_elements():
@@ -57,7 +54,7 @@ def test_parse_books_missing_elements():
         </div>
     </article>
     """
-    books = parse_books(mock_html, "http://example.com", ["USA"])
+    books = parse_books(mock_html, "http://example.com")
     assert len(books) == 1
     book = books[0]
     
@@ -78,7 +75,7 @@ def test_parse_books_malformed_price_and_rating():
         </div>
     </article>
     """
-    books = parse_books(mock_html, "http://example.com", ["USA"])
+    books = parse_books(mock_html, "http://example.com")
     assert len(books) == 1
     book = books[0]
     

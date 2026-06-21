@@ -6,8 +6,11 @@ import random
 from concurrent.futures import ThreadPoolExecutor
 import requests
 from bs4 import BeautifulSoup
+import sys
 from pathlib import Path
 from urllib.parse import urljoin
+
+sys.path.append(str(Path(__file__).parent.parent))
 
 from src.logger import get_logger
 from src.countries import get_countries
@@ -50,14 +53,13 @@ def fetch_page(page_num: int) -> str | None:
 
 RATING_MAP = {"One": 1, "Two": 2, "Three": 3, "Four": 4, "Five": 5}
 
-def parse_books(html: str, current_url: str, countries: list[str]) -> list[dict]:
+def parse_books(html: str, current_url: str) -> list[dict]:
     """
     Parse a list of books from a category page HTML.
     
     Args:
         html: Raw HTML string of the category page.
         current_url: URL of the current page, used to resolve relative links.
-        countries: List of available countries for attribution.
         
     Returns:
         List of dictionaries containing book data.
@@ -99,8 +101,7 @@ def parse_books(html: str, current_url: str, countries: list[str]) -> list[dict]
             "price": price,
             "availability": availability,
             "product_url": product_url,
-            "star_rating": star_rating,
-            "country": random.choice(countries) if countries else "Unknown"
+            "star_rating": star_rating
         })
         
     logger.info(f"Parsed {len(books)} books from page.")
@@ -149,7 +150,7 @@ def save_to_csv(books: list[dict], filepath: str) -> None:
         
     # Use utf-8-sig to include BOM so Excel opens it correctly
     with open(filepath, "w", encoding="utf-8-sig", newline="") as f:
-        fieldnames = ["title", "price", "availability", "product_url", "star_rating", "country"]
+        fieldnames = list(books[0].keys())
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         
         writer.writeheader()
@@ -174,7 +175,7 @@ def main():
             break
             
         current_url = f"{BASE_URL}index.html" if page_num == 1 else f"{BASE_URL}page-{page_num}.html"
-        books_on_page = parse_books(html, current_url, countries)
+        books_on_page = parse_books(html, current_url)
         all_books.extend(books_on_page)
         
         # Backup HTML concurrently to save time
@@ -187,8 +188,19 @@ def main():
         
     logger.info(f"Finished scraping {page_num - 1} pages.")
     
+    # Save Part 1 output
     save_to_json(all_books, "data/books.json")
-    save_to_csv(all_books, "data/books.csv")
+    
+    # Apply Part 2: Data Enrichment
+    books_with_country = []
+    for book in all_books:
+        enriched_book = book.copy()
+        enriched_book["publisher_country"] = random.choice(countries) if countries else "Unknown"
+        books_with_country.append(enriched_book)
+        
+    # Save Part 2 output
+    save_to_json(books_with_country, "data/books_with_country.json")
+    save_to_csv(books_with_country, "data/books_with_country.csv")
     
     elapsed_time = time.time() - start_time
     logger.info(f"Pipeline completed in {elapsed_time:.2f} seconds. Total books: {len(all_books)}")
