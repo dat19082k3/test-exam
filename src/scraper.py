@@ -1,5 +1,8 @@
+import re
+import time
 import requests
 from bs4 import BeautifulSoup
+from pathlib import Path
 from urllib.parse import urljoin
 
 from src.logger import get_logger
@@ -95,3 +98,34 @@ def parse_books(html: str, current_url: str) -> list[dict]:
         
     logger.info(f"Parsed {len(books)} books from page.")
     return books
+
+BACKUP_DIR = Path("html_backup")
+BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+
+def save_html_backup(product_url: str, title: str) -> str:
+    """
+    Download raw HTML of the product page and save it to html_backup/ for backup purposes.
+    
+    Args:
+        product_url: The absolute URL of the product page.
+        title: The title of the book to be used as the filename.
+        
+    Returns:
+        The path where the HTML file was saved.
+    """
+    safe_title = re.sub(r'[^\w\-]', '_', title)
+    safe_title = re.sub(r'_+', '_', safe_title).strip('_')
+    
+    filepath = BACKUP_DIR / f"{safe_title}.html"
+    
+    logger.info(f"Backing up HTML for '{title}' to {filepath}")
+    
+    time.sleep(0.5) # Rate limiting
+    
+    response = requests.get(product_url)
+    response.raise_for_status()
+    
+    with open(filepath, "wb") as f:
+        f.write(response.content)
+        
+    return str(filepath)
