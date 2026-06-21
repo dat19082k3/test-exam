@@ -1,4 +1,7 @@
 import requests
+from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+
 from src.logger import get_logger
 
 logger = get_logger("scraper")
@@ -36,3 +39,59 @@ def fetch_page(page_num: int) -> str | None:
     response.raise_for_status()
     
     return response.text
+
+RATING_MAP = {"One": 1, "Two": 2, "Three": 3, "Four": 4, "Five": 5}
+
+def parse_books(html: str, current_url: str) -> list[dict]:
+    """
+    Parse a list of books from a category page HTML.
+    
+    Args:
+        html: Raw HTML string of the category page.
+        current_url: URL of the current page, used to resolve relative links.
+        
+    Returns:
+        List of dictionaries containing book data.
+    """
+    soup = BeautifulSoup(html, "lxml")
+    books = []
+    
+    for article in soup.select("article.product_pod"):
+        # Title
+        title_tag = article.select_one("h3 > a")
+        title = title_tag["title"] if title_tag else "Unknown"
+        
+        # Product URL (convert relative to absolute)
+        href = title_tag["href"] if title_tag else ""
+        product_url = urljoin(current_url, href)
+        
+        # Price (e.g. '£51.77' -> 51.77)
+        price_tag = article.select_one("p.price_color")
+        price_text = price_tag.text.strip() if price_tag else "0"
+        # Remove currency symbol and non-numeric characters
+        price = float(price_text.replace("£", "").replace("Â", "")) 
+        
+        # Availability
+        avail_tag = article.select_one("p.instock.availability")
+        availability = avail_tag.text.strip() if avail_tag else "Unknown"
+        
+        # Star rating (e.g. 'star-rating Three')
+        star_tag = article.select_one("p.star-rating")
+        star_rating = 0
+        if star_tag:
+            classes = star_tag.get("class", [])
+            for c in classes:
+                if c in RATING_MAP:
+                    star_rating = RATING_MAP[c]
+                    break
+                    
+        books.append({
+            "title": title,
+            "price": price,
+            "availability": availability,
+            "product_url": product_url,
+            "star_rating": star_rating
+        })
+        
+    logger.info(f"Parsed {len(books)} books from page.")
+    return books
