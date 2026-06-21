@@ -9,6 +9,12 @@ An end-to-end pipeline that scrapes book data, enriches it with country informat
 - Phase 3: REST API (FastAPI server with API Key auth, rate limiting, and pagination)
 - Phase 4: RPA Bot (consumes the API, automates a headless browser to search Wikipedia, and generates an Excel report)
 
+## Documentation
+
+For deep dives into the system design and API usage, please refer to:
+- [System Architecture (C4 Model & Data Flow)](ARCHITECTURE.md)
+- [REST API Standard Operating Procedure (SOP)](API_SOP.md)
+
 ## Setup & Installation
 
 Follow these steps to get the system running locally (requires Python 3.13+).
