@@ -1,5 +1,6 @@
 import os
-from fastapi import FastAPI, HTTPException, Depends, Header, Request
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException, Depends, Header, Request, Query
 from dotenv import load_dotenv
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -11,31 +12,37 @@ from src.api import services
 
 load_dotenv()
 
-def verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
+def verify_api_key(x_api_key: str | None = Header(None, alias="X-API-Key")):
     expected_key = os.getenv("API_KEY")
     if not expected_key:
         raise HTTPException(status_code=500, detail="API_KEY not configured on server")
-    if x_api_key != expected_key:
+    if not x_api_key or x_api_key != expected_key:
         raise HTTPException(status_code=401, detail="Invalid API Key")
     return x_api_key
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    services.load_db()
+    yield
 
 app = FastAPI(
     title="Book Scraper API",
     description="API for accessing scraped books with Country data",
-    dependencies=[Depends(verify_api_key)]
+    dependencies=[Depends(verify_api_key)],
+    lifespan=lifespan
 )
 
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-@app.on_event("startup")
-def startup_event():
-    services.load_db()
-
 @app.get("/books", response_model=list[Book])
 @limiter.limit("30/minute")
-def get_books(request: Request, skip: int = 0, limit: int = 100):
+def get_books(
+    request: Request, 
+    skip: int = Query(0, ge=0, description="Number of records to skip"), 
+    limit: int = Query(100, ge=1, le=100, description="Max records to return")
+):
     """Retrieve all books with pagination."""
     return services.get_books(skip=skip, limit=limit)
 
