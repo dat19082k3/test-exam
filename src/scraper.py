@@ -1,3 +1,5 @@
+import csv
+import json
 import re
 import time
 import requests
@@ -129,3 +131,25 @@ def save_html_backup(product_url: str, title: str) -> str:
         f.write(response.content)
         
     return str(filepath)
+
+def save_to_json(books: list[dict], filepath: str) -> None:
+    """Save scraped books to a JSON file."""
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(books, f, ensure_ascii=False, indent=2)
+    logger.info(f"Saved {len(books)} books to JSON: {filepath}")
+
+def save_to_csv(books: list[dict], filepath: str) -> None:
+    """Save scraped books to a CSV file."""
+    if not books:
+        logger.warning(f"No books to save to CSV: {filepath}")
+        return
+        
+    # Use utf-8-sig to include BOM so Excel opens it correctly
+    with open(filepath, "w", encoding="utf-8-sig", newline="") as f:
+        fieldnames = ["title", "price", "availability", "product_url", "star_rating"]
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        
+        writer.writeheader()
+        writer.writerows(books)
+        
+    logger.info(f"Saved {len(books)} books to CSV: {filepath}")

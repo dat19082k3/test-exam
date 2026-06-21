@@ -163,6 +163,5 @@ cython_debug/
 logs/
 html_backup/
 output/
-data/books*.json
-data/books*.csv
-data/countries_cache.json
+data/*.json
+data/*.csv
