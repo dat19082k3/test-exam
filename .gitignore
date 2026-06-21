@@ -164,4 +164,8 @@ logs/
 html_backup/
 output/
 data/*.json
+!data/countries_fallback.json
 data/*.csv
+
+# Env files
+.env
