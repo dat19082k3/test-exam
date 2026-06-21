@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: book_scraper_api
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      # Map the local data folder so the API can read newly scraped data without rebuilding the image
+      - ./data:/app/data
+    restart: unless-stopped
