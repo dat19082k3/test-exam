@@ -1,0 +1,13 @@
+requests
+beautifulsoup4
+lxml
+fastapi
+uvicorn[standard]
+pydantic
+httpx
+playwright
+openpyxl
+slowapi
+pytest
+pytest-asyncio
+python-dotenv
