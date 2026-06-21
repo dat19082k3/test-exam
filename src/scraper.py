@@ -2,6 +2,7 @@ import csv
 import json
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor
 import requests
 from bs4 import BeautifulSoup
 from pathlib import Path
@@ -121,9 +122,7 @@ def save_html_backup(product_url: str, title: str) -> str:
     filepath = BACKUP_DIR / f"{safe_title}.html"
     
     logger.info(f"Backing up HTML for '{title}' to {filepath}")
-    
-    time.sleep(0.5) # Rate limiting
-    
+
     response = requests.get(product_url)
     response.raise_for_status()
     
@@ -153,3 +152,39 @@ def save_to_csv(books: list[dict], filepath: str) -> None:
         writer.writerows(books)
         
     logger.info(f"Saved {len(books)} books to CSV: {filepath}")
+
+def main():
+    """Main pipeline for scraping books."""
+    logger.info("Starting web scraper pipeline...")
+    start_time = time.time()
+    
+    all_books = []
+    page_num = 1
+    
+    while True:
+        html = fetch_page(page_num)
+        if html is None:
+            break
+            
+        current_url = f"{BASE_URL}index.html" if page_num == 1 else f"{BASE_URL}page-{page_num}.html"
+        books_on_page = parse_books(html, current_url)
+        all_books.extend(books_on_page)
+        
+        # Backup HTML concurrently to save time
+        # ponytail: max_workers=10 provides a balance between speed and not overwhelming the server
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            for book in books_on_page:
+                executor.submit(save_html_backup, book["product_url"], book["title"])
+            
+        page_num += 1
+        
+    logger.info(f"Finished scraping {page_num - 1} pages.")
+    
+    save_to_json(all_books, "data/books.json")
+    save_to_csv(all_books, "data/books.csv")
+    
+    elapsed_time = time.time() - start_time
+    logger.info(f"Pipeline completed in {elapsed_time:.2f} seconds. Total books: {len(all_books)}")
+
+if __name__ == "__main__":
+    main()
